@@ -246,6 +246,26 @@ class Issue(Redmine_Item):
         except Exception:
             return []
 
+    @property
+    def relations(self):
+        """
+        Retrieve relations attribute for this Issue
+        """
+        try:
+            target = self._item_path
+            json_data = self._redmine.get(target % str(self.id),
+                                          parms={'include': 'relations'})
+            data = self._redmine.unwrap_json(None, json_data)
+            relations = [Issue_Relation(redmine=self._redmine,
+                                data=relation,
+                                type='issue_relation')
+                        for relation in data['issue']['relations']]
+
+            return relations
+
+        except Exception:
+            return []
+
     def save(self, notes=None):
         '''Save all changes back to Redmine with optional notes.'''
         # Capture the notes if given
@@ -476,6 +496,25 @@ class User(Redmine_Item):
     _query_container = 'time_entry_activities'
     _query_path = '/enumerations/time_entry_activities.json'
 
+class Issue_Relation(Redmine_Item):
+    '''Object for representing a single Issue Relation in Redmine'''
+    # data hints:
+    id = None
+    issue_id = None
+    issue_to_id = None
+    relation_type = None
+    delay = None
+
+    _protected_attr = ['id', 'issue_id', 'issue_to_id' , 'relation_type' , 'delay' ]
+
+    # How to communicate this info to/from the server
+    _query_container = 'relations'
+    _query_path = ''
+    _item_path = ''
+    _item_new_path = ''
+
+    def __str__(self):
+        return '<Redmine issue_relation #%s>' % (self.id)
 
 class Wiki_Page(Redmine_Item):
     '''Object for representing a single Redmine Wiki Page'''
